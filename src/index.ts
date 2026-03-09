@@ -25,10 +25,15 @@ app.post("/auth", async (req, res) => {
       res.send("Usuario Creado")
     }
 
-    const contrasena = bcrypt.hash(password,10)
+    //encriptamos la contrasena por seguridad
+    const contrasena = await bcrypt.hash(password,10)
 
-
-
+     const NewAuth = Auth.create({
+      email,
+      password:contrasena, 
+      userId:usuario.id
+      
+     })
 
   }
   catch {

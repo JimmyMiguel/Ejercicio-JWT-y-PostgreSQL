@@ -2,7 +2,11 @@ import { Model, DataTypes } from "sequelize"
 import { sequelize } from "../bd/index.js"
  
 
-export class User extends Model { }
+export class User extends Model {
+  public id!:string
+  public birthDate!:string
+  public fullname!:string
+ }
 
 User.init({
   id: {
@@ -25,3 +29,5 @@ User.init({
     tableName: "Users",
     timestamps: false
   })
+
+  

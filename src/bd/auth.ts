@@ -1,7 +1,12 @@
 import { Model, DataTypes } from "sequelize"
 import { sequelize } from "../bd/index.js"
+import { UUID } from "node:crypto"
 
-export class Auth extends Model { }
+export class Auth extends Model {
+  public email!:string
+  public password!:string
+  public userId!:UUID
+ }
 
 Auth.init({
   email: {
@@ -30,6 +35,7 @@ Auth.init({
   modelName: "Auth",
   tableName: "Auths"
 })
+ 
 
  
 
