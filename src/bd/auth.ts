@@ -1,12 +1,12 @@
 import { Model, DataTypes } from "sequelize"
-import { sequelize } from "../bd/index.js"
+import { sequelize } from "../bd/index"
 import { UUID } from "node:crypto"
 
 export class Auth extends Model {
-  public email!:string
-  public password!:string
-  public userId!:UUID
- }
+  declare email: string
+  declare password: string
+  declare userId: number
+}
 
 Auth.init({
   email: {
@@ -21,21 +21,22 @@ Auth.init({
     type: DataTypes.STRING,
     allowNull: false
   },
-  userId:{
-    type:DataTypes.UUID,
-    allowNull:false,
-    references:{
-      model:"User",
-      key:"id"
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: "Users",
+      key: "id"
     }
 
   }
 }, {
   sequelize,
   modelName: "Auth",
-  tableName: "Auths"
+  tableName: "Auths",
+  freezeTableName: true
 })
- 
 
- 
+
+
 

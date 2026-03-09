@@ -1,19 +1,20 @@
 import { Model, DataTypes } from "sequelize"
-import { sequelize } from "../bd/index.js"
- 
+import { sequelize } from "../bd/index"
+import { UUID } from "node:crypto"
+
 
 export class User extends Model {
-  public id!:string
-  public birthDate!:string
-  public fullname!:string
- }
+  declare id: number
+  declare birthDate: string
+  declare fullname: string
+}
 
 User.init({
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
-  },  
+  },
   birthDate: {
     type: DataTypes.DATE,
     allowNull: false
@@ -27,7 +28,6 @@ User.init({
     sequelize,
     modelName: "User",
     tableName: "Users",
-    timestamps: false
+    freezeTableName: true
   })
 
-  
