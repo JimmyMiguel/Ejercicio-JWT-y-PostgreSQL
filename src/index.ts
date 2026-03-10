@@ -1,10 +1,11 @@
 import Express, { response, request } from "express";
 import { Auth } from "./bd/associations";
 import { User } from "./bd/associations";
-import bcrypt from "bcrypt"
+import bcrypt, { hash } from "bcrypt"
 import { error } from "node:console";
 import { sequelize } from "./bd";
-
+import jwt from "jsonwebtoken"
+import dotenv from "dotenv"
 
 
 const app = Express()
@@ -77,7 +78,32 @@ app.post("/auth", async (req, res) => {
 /*
 --------------------------------------
 */
-// app.post("auth/token"), async (req,res)=>{
-//   const {email,password } = req.body
-// }
+
+app.post("/auth/token", async (req, res) => {
+
+
+  const { email, password } = req.body
+
+  const userFind = await Auth.findOne({
+    where: {
+      email: email
+    }
+  })
+
+  if (!userFind) {
+    console.log("Usuario no encontrado")
+    return res.status(404).json({ messege: "No Autorizado" })
+  }
+
+  const passGood = await bcrypt.compare(password, userFind.password)
+  if (!passGood) {
+    res.send(404).json({ messege: "Contrasena no coinciden" })
+  }
+
+
+  const token = jwt.sign({ id: userFind?.userId }, process.env.JWT_TOKEN!, { expiresIn: "1h" })
+
+  return res.json({ token })
+
+})
 
