@@ -2,9 +2,9 @@ import Express, { response, request } from "express";
 import { Auth } from "./bd/associations";
 import { User } from "./bd/associations";
 import bcrypt, { hash } from "bcrypt"
-import { error } from "node:console";
+import { error, log } from "node:console";
 import { sequelize } from "./bd";
-import jwt from "jsonwebtoken"
+import jwt, { JwtPayload } from "jsonwebtoken"
 import dotenv from "dotenv"
 
 
@@ -81,29 +81,52 @@ app.post("/auth", async (req, res) => {
 
 app.post("/auth/token", async (req, res) => {
 
-
+  //recibe los datos de la peticion
   const { email, password } = req.body
-
+  // busca en la base de datos el unico registro que coincida
   const userFind = await Auth.findOne({
     where: {
       email: email
     }
   })
-
+  //Si no coincide la contrasena o el usuario le envia este mensaje y termina la ejecucion
   if (!userFind) {
     console.log("Usuario no encontrado")
     return res.status(404).json({ messege: "No Autorizado" })
   }
-
-  const passGood = await bcrypt.compare(password, userFind.password)
+  // compara la cotrasena encriptada
+  const passGood =  bcrypt.compare(password, userFind.password)
   if (!passGood) {
     res.send(404).json({ messege: "Contrasena no coinciden" })
   }
 
-
+  // genero un jwt con mi firma persoanal que tenga asociado el userid que expiere en una hora
   const token = jwt.sign({ id: userFind?.userId }, process.env.JWT_TOKEN!, { expiresIn: "1h" })
 
   return res.json({ token })
 
 })
 
+/*
+--------------------------------------
+*/
+
+app.get("/me", async (req, res) => {
+  const token = req.get("Authorization")
+  if(!token){
+    return res.status(400).json({
+      messege:"No se proporciono el tokken"
+    })
+  }
+
+  const tokenParseado = token.split(" ")[1]
+  const check = await jwt.verify(tokenParseado, process.env.JWT_TOKEN!) as JwtPayload
+  if(!check){
+    return res.status(401).json({message:"Session expirada"})
+
+  } else{
+    console.log("El ID del usuario es:", check.id);
+     }
+ 
+
+})
