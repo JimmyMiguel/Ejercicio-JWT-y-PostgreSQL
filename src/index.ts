@@ -89,19 +89,22 @@ app.post("/auth/token", async (req, res) => {
       email: email
     }
   })
+
+  console.log(userFind);
+
   //Si no coincide la contrasena o el usuario le envia este mensaje y termina la ejecucion
   if (!userFind) {
     console.log("Usuario no encontrado")
     return res.status(404).json({ messege: "No Autorizado" })
   }
   // compara la cotrasena encriptada
-  const passGood =  bcrypt.compare(password, userFind.password)
+  const passGood = bcrypt.compare(password, userFind.password)
   if (!passGood) {
     res.send(404).json({ messege: "Contrasena no coinciden" })
   }
 
   // genero un jwt con mi firma persoanal que tenga asociado el userid que expiere en una hora
-  const token = jwt.sign({ id: userFind?.userId }, process.env.JWT_TOKEN!, { expiresIn: "1h" })
+  const token = jwt.sign({ id: userFind?.userId }, process.env.JWT_TOKEN!, { expiresIn: "1min" })
 
   return res.json({ token })
 
@@ -112,21 +115,36 @@ app.post("/auth/token", async (req, res) => {
 */
 
 app.get("/me", async (req, res) => {
+  //traemos el token de autori..
   const token = req.get("Authorization")
-  if(!token){
+  //si no se proporciono el token retorna un mensaje 
+  if (!token) {
     return res.status(400).json({
-      messege:"No se proporciono el tokken"
+      messege: "No se proporciono el tokken"
     })
   }
 
+  //si hay token , dividimos en dos, y accedemos al segundo elemento
   const tokenParseado = token.split(" ")[1]
-  const check = await jwt.verify(tokenParseado, process.env.JWT_TOKEN!) as JwtPayload
-  if(!check){
-    return res.status(401).json({message:"Session expirada"})
 
-  } else{
-    console.log("El ID del usuario es:", check.id);
-     }
- 
+  try {
+    //verificamos el token parseado con el token que nosotros creamos 
+    const check = jwt.verify(tokenParseado, process.env.JWT_TOKEN!) as JwtPayload
+    // buscamos el id del usuario que coincida con el token 
+    const user = await User.findByPk(check.id);
+
+    if (!user) {
+      return res.status(401).json({ message: "Usuario no encontrado" })
+
+    }
+    //
+    return res.json(user)
+
+
+
+  } catch (error) {
+    return res.status(401).json({ message: "Sesión expirada o token inválido" });
+
+  }
 
 })
