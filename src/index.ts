@@ -6,6 +6,7 @@ import { error, log } from "node:console";
 import { sequelize } from "./bd";
 import jwt, { JwtPayload } from "jsonwebtoken"
 import dotenv from "dotenv"
+import { middlewere } from "./middlewere";
 
 
 const app = Express()
@@ -114,37 +115,28 @@ app.post("/auth/token", async (req, res) => {
 --------------------------------------
 */
 
-app.get("/me", async (req, res) => {
-  //traemos el token de autori..
-  const token = req.get("Authorization")
-  //si no se proporciono el token retorna un mensaje 
-  if (!token) {
-    return res.status(400).json({
-      messege: "No se proporciono el tokken"
-    })
-  }
+app.get("/me", middlewere, async (req, res) => {
+  // consumimos user que trae el middleware por medio de locals
 
-  //si hay token , dividimos en dos, y accedemos al segundo elemento
-  const tokenParseado = token.split(" ")[1]
+  const { user } = res.locals;
+
+  // Si no hay usuario en locals, algo falló en el middleware
+  if (!user || !user.id) {
+    return res.status(401).json({ message: "No autorizado" });
+  }
 
   try {
-    //verificamos el token parseado con el token que nosotros creamos 
-    const check = jwt.verify(tokenParseado, process.env.JWT_TOKEN!) as JwtPayload
-    // buscamos el id del usuario que coincida con el token 
-    const user = await User.findByPk(check.id);
+    // 2. Usamos user.id para buscar en la base de datos
+    const userDb = await User.findByPk(user.id);
 
-    if (!user) {
-      return res.status(401).json({ message: "Usuario no encontrado" })
-
+    if (!userDb) {
+      return res.status(404).json({ message: "Usuario no encontrado en la base de datos" });
     }
-    //
-    return res.json(user)
 
-
-
+    // 3. Devolvemos los datos del usuario
+    res.json({ user: userDb });
+    
   } catch (error) {
-    return res.status(401).json({ message: "Sesión expirada o token inválido" });
-
+    res.status(500).json({ message: "Error al buscar el usuario" });
   }
-
-})
+});
